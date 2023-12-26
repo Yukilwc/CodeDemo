@@ -8,32 +8,61 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-func GetInsertBuilderWithEntitys(entity *[]any) (ok:bool,insertBuilder squirrel.InsertBuilder) {
-	if len(entity) == 0 {
-		return false,nil
+func GetInsertBuilderWithEntitys(entitys *[]any, insertBuilder squirrel.InsertBuilder, removeKeys []string) (bool, squirrel.InsertBuilder) {
+	if len(*entitys) == 0 {
+		return false, insertBuilder
 	}
-	val := reflect.ValueOf(entity)
-	val = reflect.Indirect(val)
-	typ := val.Type()
-	for i := 0; i < val.NumField(); i++ {
-		valField := val.Field(i)
-		typeField := typ.Field(i)
-		tagValue := typeField.Tag.Get("db")
-		switch tagValue {
-		case "-":
-			continue
-		case "":
-			continue
-		default:
-			if strings.Contains(tagValue, ",") {
-				tagValue = strings.Split(tagValue, ",")[0]
+	for _, entity := range *entitys {
+		val := reflect.ValueOf(entity)
+		val = reflect.Indirect(val)
+		typ := val.Type()
+		for i := 0; i < val.NumField(); i++ {
+			// valField := val.Field(i)
+			typeField := typ.Field(i)
+			dbTagValue := typeField.Tag.Get("db")
+			// keyName := typeField.Name
+			switch dbTagValue {
+			case "-":
+				continue
+			case "":
+				continue
+			default:
+				if strings.Contains(dbTagValue, ",") {
+					dbTagValue = strings.Split(dbTagValue, ",")[0]
+				}
+				dbTagValue = strings.TrimSpace(dbTagValue)
+				dbTagValue = fmt.Sprintf("`%s`", dbTagValue)
+				fmt.Printf("\n dbTagValue : %+v\n", dbTagValue)
+				// insertMap[dbTagValue] = valField.Interface()
 			}
-			tagValue = strings.TrimSpace(tagValue)
-			tagValue = fmt.Sprintf("`%s`", tagValue)
-			insertMap[tagValue] = valField.Interface()
+		}
+		// insertBuilder = insertBuilder.SetMap(insertMap)
+	}
+
+	return true, insertBuilder
+
+}
+
+func GetColumns(obj any, removeKeys []string) []string {
+	columns := []string{}
+	reflectVal := reflect.ValueOf(obj)
+	reflectVal = reflect.Indirect(reflectVal)
+	reflectType := reflectVal.Type()
+	for i := 0; i < reflectVal.NumField(); i++ {
+		fieldType := reflectType.Field(i)
+		if IsRemoveKey(removeKeys, fieldType.Name) {
+		} else {
+			columns = append(columns, fieldType.Name)
 		}
 	}
-	insertBuilder = insertBuilder.SetMap(insertMap)
-	return insertBuilder
+	return columns
+}
 
+func IsRemoveKey(removeKeys []string, key string) bool {
+	for _, v := range removeKeys {
+		if v == key {
+			return true
+		}
+	}
+	return false
 }
