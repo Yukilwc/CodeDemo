@@ -28,10 +28,13 @@ type EventNotification struct {
 
 func TestGetInsertBuilderWithEntitys(t *testing.T) {
 	entity := &EventNotification{}
+	entity2 := &EventNotification{}
 	// do something to init entity
 	entity.UpdateAt = time.Now()
 	insertBuilder := squirrel.Insert("mytablename")
-	ok, insertBuilder := GetInsertBuilderWithEntitys(&[]any{entity}, insertBuilder,
+	ok, insertBuilder := GetInsertBuilderWithEntitys(
+		&[]any{entity, entity2},
+		insertBuilder,
 		&[]string{"Id", "CreateAt", "UpdateAt"})
 	if !ok {
 		fmt.Println("数组为空")
