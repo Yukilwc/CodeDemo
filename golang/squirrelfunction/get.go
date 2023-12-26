@@ -8,10 +8,13 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-func GetInsertBuilderWithEntitys(entitys *[]any, insertBuilder squirrel.InsertBuilder, removeKeys []string) (bool, squirrel.InsertBuilder) {
+func GetInsertBuilderWithEntitys(entitys *[]any, insertBuilder squirrel.InsertBuilder, removeKeys *[]string) (bool, squirrel.InsertBuilder) {
 	if len(*entitys) == 0 {
 		return false, insertBuilder
 	}
+	insertBuilder.columns(columns)
+	columns := GetColumns((*entitys)[0], removeKeys)
+
 	for _, entity := range *entitys {
 		val := reflect.ValueOf(entity)
 		val = reflect.Indirect(val)
@@ -36,14 +39,15 @@ func GetInsertBuilderWithEntitys(entitys *[]any, insertBuilder squirrel.InsertBu
 				// insertMap[dbTagValue] = valField.Interface()
 			}
 		}
-		// insertBuilder = insertBuilder.SetMap(insertMap)
 	}
 
 	return true, insertBuilder
 
 }
+func GetDbTagFromType() {
 
-func GetColumns(obj any, removeKeys []string) []string {
+}
+func GetColumns(obj any, removeKeys *[]string) []string {
 	columns := []string{}
 	reflectVal := reflect.ValueOf(obj)
 	reflectVal = reflect.Indirect(reflectVal)
@@ -58,8 +62,8 @@ func GetColumns(obj any, removeKeys []string) []string {
 	return columns
 }
 
-func IsRemoveKey(removeKeys []string, key string) bool {
-	for _, v := range removeKeys {
+func IsRemoveKey(removeKeys *[]string, key string) bool {
+	for _, v := range *removeKeys {
 		if v == key {
 			return true
 		}
