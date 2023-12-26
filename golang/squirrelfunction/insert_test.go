@@ -46,6 +46,7 @@ func TestGetInsertBuilderWithEntitys(t *testing.T) {
 
 func TestGetColumns(t *testing.T) {
 	entity := &EventNotification{}
-	columns := GetColumns(entity, &[]string{"Id", "CreateAt", "UpdateAt"})
-	fmt.Printf("\n columns: %+v\n", columns)
+	keys, dbs := GetColumns(entity, &[]string{"Id", "CreateAt", "UpdateAt"})
+	fmt.Printf("\n columns keys: %+v\n", keys)
+	fmt.Printf("\n columns dbs: %+v\n", dbs)
 }
