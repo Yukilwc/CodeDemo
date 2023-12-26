@@ -8,7 +8,7 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-func GetInsertBuilderWithEntitys(entitys *[]any, insertBuilder squirrel.InsertBuilder, removeKeys *[]string) (bool, squirrel.InsertBuilder) {
+func GetInsertBuilderWithEntityRows(entitys *[]any, insertBuilder squirrel.InsertBuilder, removeKeys *[]string) (bool, squirrel.InsertBuilder) {
 	if len(*entitys) == 0 {
 		return false, insertBuilder
 	}
