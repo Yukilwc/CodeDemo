@@ -14,7 +14,7 @@ func TestGetInsertBuilderWithEntitys(t *testing.T) {
 	// do something to init entity
 	entity.UpdateAt = time.Now()
 	insertBuilder := squirrel.Insert("mytablename")
-	ok, insertBuilder := GetInsertBuilderWithEntitys(
+	insertBuilder, ok := GetInsertBuilderWithEntitys(
 		&[]any{entity, entity2},
 		insertBuilder,
 		&[]string{"Id", "CreateAt", "UpdateAt"})

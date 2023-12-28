@@ -7,10 +7,10 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-func GetInsertBuilderWithEntitys(entitys *[]any, insertBuilder squirrel.InsertBuilder, removeKeys *[]string) (bool, squirrel.InsertBuilder) {
+func GetInsertBuilderWithEntitys(entitys *[]any, insertBuilder squirrel.InsertBuilder, removeKeys *[]string) (squirrel.InsertBuilder, bool) {
 
 	if len(*entitys) == 0 {
-		return false, insertBuilder
+		return insertBuilder, false
 	}
 	keyColumns, dbColumns := GetColumns((*entitys)[0], removeKeys)
 	insertBuilder = insertBuilder.Columns(*dbColumns...)
@@ -30,6 +30,6 @@ func GetInsertBuilderWithEntitys(entitys *[]any, insertBuilder squirrel.InsertBu
 		insertBuilder = insertBuilder.Values(values...)
 
 	}
-	return true, insertBuilder
+	return insertBuilder, true
 
 }
