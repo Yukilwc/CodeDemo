@@ -62,3 +62,48 @@ func TestCopierCopyTime(t *testing.T) {
 	fmt.Printf("\n reflect.TypeOf(int64(0): %+v\n", reflect.TypeOf(int64(0)))
 	fmt.Printf("\n reflect.PointerTo(reflect.TypeOf(int64(0)): %+v\n", reflect.PointerTo(reflect.TypeOf(int64(0))))
 }
+
+type UserRow struct {
+	Id    int64
+	Name  string
+	Email string
+}
+
+func TestUserName(t *testing.T) {
+	resRows := &[]*EventNotificationResponse{
+		{
+			CreateBy: 1,
+			UpdateBy: 1,
+		},
+		{
+			CreateBy: 2,
+			UpdateBy: 3,
+		},
+	}
+	SetUserName(
+		resRows,
+		[]string{"CreateBy", "UpdateBy"},
+		[]string{"CreateByName", "UpdateByName"},
+		func(ids *[]int64) *[]UserRow {
+			users := &[]UserRow{
+				{
+					Id:   1,
+					Name: "名字一",
+				},
+				{
+					Id:   2,
+					Name: "名字二",
+				},
+				{
+					Id:   3,
+					Name: "名字三",
+				},
+			}
+			return users
+		},
+	)
+
+	for _, v := range *resRows {
+		fmt.Printf("\n最终修改后的resRows : %+v\n", v)
+	}
+}

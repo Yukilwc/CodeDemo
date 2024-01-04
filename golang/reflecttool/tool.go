@@ -36,6 +36,14 @@ func GetStructFieldByKey(value any, key string) (reflect.StructField, bool) {
 	f, ok := rType.FieldByName(key)
 	return f, ok
 }
+func GetFieldByKey(value any, key string) (reflect.StructField, reflect.Value, bool) {
+	rVal := reflect.ValueOf(value)
+	rVal = reflect.Indirect(rVal)
+	rType := rVal.Type()
+	structField, ok := rType.FieldByName(key)
+	valueField := rVal.FieldByName(key)
+	return structField, valueField, ok
+}
 
 // 属性是否是Time或者是NullTime
 func IsTimeType(sf reflect.StructField) bool {
@@ -215,4 +223,77 @@ func CopierCopyTime(to any, from any) {
 		FieldNameMapping: []copier.FieldNameMapping{},
 		Converters:       []copier.TypeConverter{timeConverter, nullTimeConverter, nullTimePtrConverter},
 	})
+}
+
+// 自动填充用户名
+
+func SetUserName[T any, U any](
+	resRows *[]T,
+	idKeys []string,
+	nameKeys []string,
+	getUsers func(ids *[]int64) *[]U,
+) {
+	// 从实体中，获取对应的id
+	idList := []int64{}
+	for _, resRow := range *resRows {
+		for _, idKey := range idKeys {
+			// 从中取出id值
+			reflectVal := reflect.ValueOf(resRow)
+			reflectVal = reflect.Indirect(reflectVal)
+			valueField := reflectVal.FieldByName(idKey)
+			// fmt.Printf("\n 查找的idKey: %+v\n", idKey)
+			// fmt.Printf("\n 查找的idKey的结果: %+v\n", valueField)
+
+			switch v := valueField.Interface().(type) {
+			case int64:
+				idList = append(idList, v)
+			case sql.NullInt64:
+				if v.Valid {
+					idList = append(idList, v.Int64)
+				}
+
+			}
+		}
+	}
+
+	fmt.Printf("\n 从实体数组中生成的idList: %+v\n", idList)
+	// 去重idList
+	deduplicateList := []int64{}
+	m := make(map[int64]struct{})
+	for _, v := range idList {
+		if _, ok := m[v]; !ok {
+			m[v] = struct{}{}
+			deduplicateList = append(deduplicateList, v)
+		}
+	}
+	fmt.Printf("\n 去重后的id数组: %+v\n", deduplicateList)
+	// 通过这组id，查询到一组用户，这组用户，带有id和name的信息
+	users := getUsers(&deduplicateList)
+	// 转换下形态
+	userIdMap := make(map[int64]any)
+	for _, user := range *users {
+		_, val, ok := GetFieldByKey(user, "Id")
+		if ok {
+			id, _ := val.Interface().(int64)
+			userIdMap[id] = user
+		}
+	}
+	fmt.Printf("\n 生成id user的map: %+v\n", userIdMap)
+	// 遍历返回rows，对齐内部的指定name字段，进行填充
+	for _, resRow := range *resRows {
+		for i, idKey := range idKeys {
+			nameKey := nameKeys[i]
+			_, idValue, _ := GetFieldByKey(resRow, idKey)
+			_, nameValue, _ := GetFieldByKey(resRow, nameKey)
+			// 拿到id
+			id, _ := idValue.Interface().(int64)
+			// 从id找到map的user
+			user := userIdMap[id]
+			// 从user中取出name
+			_, userNameVal, _ := GetFieldByKey(user, "Name")
+			name := userNameVal.Interface().(string)
+			// 写入row中
+			nameValue.SetString(name)
+		}
+	}
 }
